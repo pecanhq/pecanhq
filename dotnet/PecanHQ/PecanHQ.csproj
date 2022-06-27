@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PackageId>PecanHQ</PackageId>
+    <PackageProjectUrl>https://www.pecanhq.com/</PackageProjectUrl>
+    <Version>0.0.1</Version>
+    <Authors>Liam Fisk</Authors>
+    <Company>Squirrel Technologies Limited</Company>
+    <Copyright>© Squirrel Technologies Limited</Copyright>
+    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+    <PackageTags>Iam;Authorization;Authentication</PackageTags>
+    <Title>Pecan Authorization</Title>
+    <Description>
+      This client library unlocks Pecan IAM for server applications.
+    </Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+</Project>
