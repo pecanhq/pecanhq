@@ -1,0 +1,14 @@
+.*
+!.gitignore
+!.gitlab-ci.yml
+*.egg-info
+*.retry
+*.jar
+*.pyc
+*.cfg
+!setup.cfg
+
+build
+dist
+
+**/__pycache__/**
