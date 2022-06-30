@@ -1,10 +1,10 @@
-## .NET API
+# .NET API
 
 > To get started, make sure you have signed up at [https://www.pecanhq.com/](https://www.pecanhq.com/), released an artifact, and created an application user with access to the *app* role.
 
 Follow the steps below to embed the client library into your application.
 
-### Step 1: Install the nuget package.
+## Step 1: Install the nuget package.
 
 ```shell
 dotnet add package PecanHQ
@@ -12,7 +12,7 @@ dotnet add package PecanHQ
 
 The [PecanHQ nuget](https://www.nuget.org/packages/PecanHQ) package can be used to embed [Pecan](https://www.pecanhq.com/) into your .NET application.
 
-### Step 2: Set up the client
+## Step 2: Set up the client
 
 ```csharp
 // Create the authorization service
@@ -25,7 +25,7 @@ var service = await Pecan.CreateAsync(
 
 Create a single instance of the service on application startup. The service requires application credentials and a released schema, and will try load that schema from the [Pecan](https://www.pecanhq.com/) API.
 
-### Step 2: Load a user profile
+## Step 2: Load a user profile
 
 ```csharp
 ClaimsPrincipal principal;
@@ -71,7 +71,7 @@ else
 
 After authentication, the client library locates user profiles using unique asserted claims. Once located, the full profile can be be loaded using the identifier. The data in that profile can then be added to the security principal.
 
-### Step 3: Use an authorization session
+## Step 3: Use an authorization session
 
 ```csharp
 // Create an authorization session
@@ -92,11 +92,11 @@ decimal? value = session.AsDecimal("<claim>");
 
 Before each request, a new authentication session is created for the current principal. This session can be used to ensure access to a specific resource, escalate permissions, or extract data to use in attribute-based access control.
 
-### Advanced Usage
+## Advanced Usage
 
 A key design goal of [Pecan](https://www.pecanhq.com/) was to minimise communication with the API during normal operation. To achieve that, services and profiles can be locally cached, and enough data exists in each profile to make all authorization decisions locally.
 
-#### Caching the service
+### Caching the service
 
 ```csharp
 // All schema details can be exported to JSON and cached.
@@ -114,7 +114,7 @@ var success = Pecan.TryCreate(
 
 The client library loads the schema from the API, and uses it to make authorization decisions. To improve startup times, the service can be dumped to JSON and reloaded from this local copy on startup.
 
-#### Caching profiles
+### Caching profiles
 
 ```csharp
 // The claim profiles can be exported to JSON and cached.
