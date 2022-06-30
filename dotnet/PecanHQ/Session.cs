@@ -16,6 +16,18 @@ namespace PecanHQ
     public struct Session
     {
 
+        private static readonly Dictionary<string, bool> TRUTHY = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "true", true },
+            { "t", true },
+            { "1", true },
+            { "yes", true },
+            { "false", false },
+            { "f", false },
+            { "0", false },
+            { "no", false },
+        };
+
         private readonly Pecan pecan;
 
         private readonly ClaimsPrincipal? principal;
@@ -50,9 +62,9 @@ namespace PecanHQ
 
             if (!this.registrations.TryGetValue(service, out var claim))
             {
-                if (!this.pecan.Registrations.TryGetValue(service, out var active)
-                    || (active.Subject != null && this.GetString(active.Subject) == null)
-                    || (active.Tenant != null && this.GetString(active.Tenant) == null))
+                if (!this.pecan.Services.TryGetValue(service, out var active)
+                    || (active.Subject != null && this.AsString(active.Subject) == null)
+                    || (active.Tenant != null && this.AsString(active.Tenant) == null))
                 {
                     this.registrations[service] = null;
                     return false;
@@ -86,7 +98,7 @@ namespace PecanHQ
         /// <summary>
         /// Fetch a single string-valued claim.
         /// </summary>
-        public string? GetString(string claim)
+        public string? AsString(string claim)
         {
             var issuer = pecan?.Issuer;
             return this.principal?.FindFirst(x => x.Issuer == issuer && x.Type == claim)?.Value;
@@ -98,7 +110,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as a boolean.
         /// </remarks>
-        public bool? GetBool(string claim)
+        public bool? AsBool(string claim)
         {
             if (this.pecan == null)
             {
@@ -114,15 +126,15 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
-            if (bool.TryParse(selected, out var value))
+            var selected = this.AsString(claim);
+            if (selected == null)
+            {
+                values[claim] = null;
+            }
+            else if (TRUTHY.TryGetValue(selected, out var value))
             {
                 values[claim] = value;
                 return value;
-            }
-            else if (selected == null)
-            {
-                values[claim] = null;
             }
             return null;
         }
@@ -133,7 +145,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as a Guid.
         /// </remarks>
-        public Guid? GetGuid(string claim)
+        public Guid? AsGuid(string claim)
         {
             if (this.pecan == null)
             {
@@ -149,7 +161,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (Guid.TryParse(selected, out var value))
             {
                 values[claim] = value;
@@ -168,7 +180,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as an int.
         /// </remarks>
-        public int? GetInt(string claim)
+        public int? AsInt(string claim)
         {
             if (this.pecan == null)
             {
@@ -184,7 +196,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (int.TryParse(selected, out var value))
             {
                 values[claim] = value;
@@ -203,7 +215,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as a long.
         /// </remarks>
-        public long? GetLong(string claim)
+        public long? AsLong(string claim)
         {
             if (this.pecan == null)
             {
@@ -219,7 +231,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (long.TryParse(selected, out var value))
             {
                 values[claim] = value;
@@ -238,7 +250,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as a decimal.
         /// </remarks>
-        public decimal? GetDecimal(string claim)
+        public decimal? AsDecimal(string claim)
         {
             if (this.pecan == null)
             {
@@ -254,7 +266,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (decimal.TryParse(selected, out var value))
             {
                 values[claim] = value;
@@ -273,7 +285,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as a float.
         /// </remarks>
-        public float? GetFloat(string claim)
+        public float? AsFloat(string claim)
         {
             if (this.pecan == null)
             {
@@ -289,7 +301,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (float.TryParse(selected, out var value))
             {
                 values[claim] = value;
@@ -308,7 +320,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as a double.
         /// </remarks>
-        public double? GetDouble(string claim)
+        public double? AsDouble(string claim)
         {
             if (this.pecan == null)
             {
@@ -324,7 +336,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (double.TryParse(selected, out var value))
             {
                 values[claim] = value;
@@ -343,7 +355,7 @@ namespace PecanHQ
         /// <remarks>
         /// The result will be null if the claim does not exist or cannot be parsed as a datetime.
         /// </remarks>
-        public DateTimeOffset? GetDateTimeOffset(string claim)
+        public DateTimeOffset? AsDateTimeOffset(string claim)
         {
             if (this.pecan == null)
             {
@@ -359,7 +371,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (DateTimeOffset.TryParse(selected, out var value))
             {
                 values[claim] = value;
@@ -393,7 +405,7 @@ namespace PecanHQ
                 }
             }
 
-            var selected = this.GetString(claim);
+            var selected = this.AsString(claim);
             if (selected != null)
             {
                 try

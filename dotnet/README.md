@@ -87,7 +87,7 @@ if (session.HasPermissions("<service>", "<resource>", "<permissions>"))
 session.EscalatePrivileges();
 
 // Fetch a typed assertion for attribute-based access control
-decimal? value = session.GetDecimal("<claim>");
+decimal? value = session.AsDecimal("<claim>");
 ```
 
 Before each request, a new authentication session is created for the current principal. This session can be used to ensure access to a specific resource, escalate permissions, or extract data to use in attribute-based access control.
@@ -100,7 +100,7 @@ A key design goal of [Pecan](https://www.pecanhq.com/) was to minimise communica
 
 ```csharp
 // All schema details can be exported to JSON and cached.
-byte[] schema = service.AsJson();
+byte[] schema = service.Dump();
 
 // Cached state can be used to reconstruct the service locally.
 var success = Pecan.TryCreate(

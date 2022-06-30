@@ -113,7 +113,7 @@ namespace PecanHQ
         /// <summary>
         /// All registered service claims.
         /// </summary>
-        public IReadOnlyDictionary<string, ServiceRegistration> Registrations { get => services; }
+        public IReadOnlyDictionary<string, ServiceRegistration> Services { get => services; }
 
         /// <summary>
         /// All system permissions.
@@ -180,7 +180,7 @@ namespace PecanHQ
                 if (this.claims.TryGetValue(key, out var permission)
                     && !claim.Value.StartsWith(permission.Prefix))
                 {
-                    var prefix = claim.Value.Substring(0, 6);
+                    var prefix = claim.Value.Substring(0, 3);
                     if (!permission.Versions.ContainsKey(prefix)
                         && this.Resource.HasPermissionsUri)
                     {
@@ -193,17 +193,9 @@ namespace PecanHQ
         }
 
         /// <summary>
-        /// Create a new authorization session for a claims principal.
-        /// </summary>
-        public Session Session(ClaimsPrincipal? principal)
-        {
-            return new Session(this, principal);
-        }
-
-        /// <summary>
         /// Persist the current service state to UTF8 JSON bytes.
         /// </summary>
-        public byte[] AsJson()
+        public byte[] Dump()
         {
             var state = new ServiceState(
                 this.Service.Uri,
@@ -247,7 +239,7 @@ namespace PecanHQ
                         continue;
                     }
 
-                    var prefix = claim.Value.Substring(0, 6);
+                    var prefix = claim.Value.Substring(0, 3);
                     if (!permission.Versions.ContainsKey(prefix)
                         && this.Resource.HasPermissionsUri)
                     {
@@ -261,6 +253,7 @@ namespace PecanHQ
                 return default(ClaimResponse);
             }
         }
+
         /// <summary>
         /// Reload all authorization schema information.
         /// </summary>
@@ -348,7 +341,7 @@ namespace PecanHQ
                     Tenant = entry.Tenant != null ? $"{entry.Authority}{entry.Tenant}" : null,
                 };
 
-                var prefix = Convert.ToBase64String(BitConverter.GetBytes(entry.Version)).Substring(0, 6);
+                var prefix = Convert.ToBase64String(BitConverter.GetBytes(entry.Version)).Substring(0, 3);
                 claims[key] = new PermissionClaim(entry.Claim, prefix, new());
                 permissions[key] = new Permissions(entry.Version, system);
                 if (include)
