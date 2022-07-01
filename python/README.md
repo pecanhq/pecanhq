@@ -17,7 +17,7 @@ The [PecanHQ pip](https://pypi.org/project/pecanhq/) package can be used to embe
 ```python
 # Create the authorization service
 import pecanhq, requests
-pecan = await pecanhq.create(
+pecan = pecanhq.create(
     requests.session(),
     "<app-key>",
     "<app-secret>",
