@@ -25,8 +25,6 @@ The aim of RLAC is to simplify and future-proof your code by focusing on what it
 
 Implementing RLAC is a hassle that [Pecan](https://www.pecanhq.com/) takes off your hands. Firstly, it provides tools for you to design your resource schema, and update it when you release new versions. Secondly, it allows you to customize roles and set which resources they can access. Finally, it acts as a specialized data store for user, organization, and app profiles.
 
-[Pecan](https://www.pecanhq.com/) was created to simplify a complex DotNET application, and so the first client library has been implemented in [DotNET 6.0](dotnet/README.md). More languages will be added based on feedback.
-
 We are at the start of our incredible journey, and by the end we aim to be the defacto standard for authorization in software that needs more than *user* and *admin* accounts.
 
 ## Getting Started
