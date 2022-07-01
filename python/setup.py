@@ -9,7 +9,7 @@ with open(path.join(parent, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pecanhq',
-    version='0.0.3',
+    version='0.0.4',
     description="This client library unlocks Pecan IAM for server applications.",
     long_description=long_description,
     long_description_content_type='text/markdown',
