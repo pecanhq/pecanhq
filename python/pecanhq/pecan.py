@@ -18,18 +18,26 @@ import hmac
 import hashlib
 import typing
 import json
+import binascii
 
 def create(
         session: requests.Session,
         key: str,
-        secret: bytes,
+        secret: str,
         artifact: str,
         schema: decimal.Decimal,
         url: str = 'https://www.pecanhq.com/grant/',
         cached: typing.Optional[bytes] = None,
         timeout: typing.Optional[float] = None):
     """Create a new pecan instance for a specific authorization schema."""
-    auth = SigningAuth(key, secret)
+    try:
+        raw = base64.b64decode(secret)
+    except binascii.Error:
+        raw = None
+
+    assert bool(raw), "Expecting a base64-encoded secret"
+
+    auth = SigningAuth(key, raw)
 
     cached = False
     if cached:
@@ -45,7 +53,7 @@ def create(
 
         if success:
             cached = True
-            service = grant.Grant(session, url, auth, data.get('@links', None))
+            resource = grant.Grant(session, url, auth, data.get('@links', None))
             account_id = data.get('account_id', None)
             user = data.get('user', None)
             manifest = data.get('manifest', None)
@@ -56,23 +64,23 @@ def create(
     if not cached:
         r = session.get(url, auth=auth, timeout=timeout)
         r.raise_for_status()
-        service = grant.Grant(session, r.url, auth, r.json().get('@links', None))
+        resource = grant.Grant(session, r.url, auth, r.json().get('@links', None))
 
-        assert service.has_manifest, 'The credentials have no access to the manifest resource'
-        assert service.has_refresh_profile, 'The credentials have no access to the refresh profile resource'
+        assert resource.has_manifest, 'The credentials have no access to the manifest resource'
+        assert resource.has_refresh_profile, 'The credentials have no access to the refresh profile resource'
 
-        q1 = service.as_manifest_uri(timeout)
+        q1 = resource.as_manifest_uri(timeout)
         q1.set(artifact, schema)
         manifest = q1.get()
         assert manifest is not None, 'No matching manifest was found'
 
-        profile = service.as_refresh_profile_uri(timeout).post(manifest['account_id'])
+        profile = resource.as_refresh_profile_uri(timeout).post(manifest['account_id'])
         assert profile is not None, 'User profile could not be loaded'
 
         user = { x['key']: x['value'] for x in profile['assertions']}
         account_id = profile['account_id']
 
-    pecan = Pecan(account_id, artifact, schema, service, manifest, user)
+    pecan = Pecan(account_id, artifact, schema, resource, manifest, user)
     for entry in manifest['services']:
         resources = {}
         system = 32767&entry['version']
@@ -115,13 +123,13 @@ class Pecan:
             account_id: str,
             artifact: str,
             schema: decimal.Decimal,
-            service: grant.Grant,
+            resource: grant.Grant,
             manifest: typing.Dict,
             user: typing.Dict) -> None:
         self.account_id = account_id
         self.artifact = artifact
         self.schema = schema
-        self.service = service
+        self.resource = resource
         self.manifest = manifest
         self.masks = { x['key']: x['mask'] for x in manifest['permissions']}
         self.services = {} # type: typing.Dict[str, Service]
@@ -159,10 +167,10 @@ class Pecan:
             tenant: typing.Optional[str] = None,
             timeout: typing.Optional[float] = None) -> typing.Optional[typing.Dict]:
         """Look up an account using a key-valued claim."""
-        if not self.service.has_lookup_account:
+        if not self.resource.has_lookup_account:
             return None
 
-        uri = self.service.as_lookup_account_uri(timeout)
+        uri = self.resource.as_lookup_account_uri(timeout)
         uri.set(key, value, tenant)
         return uri.get()
 
@@ -170,10 +178,10 @@ class Pecan:
             account_id: str,
             timeout: typing.Optional[float] = None) -> typing.Optional[typing.Dict]:
         """Load all claims for an account."""
-        if not self.service.has_refresh_profile:
+        if not self.resource.has_refresh_profile:
             return None
 
-        profile = self.service.as_refresh_profile_uri(timeout).post(account_id)
+        profile = self.resource.as_refresh_profile_uri(timeout).post(account_id)
         if not profile:
             return None
 
@@ -219,7 +227,7 @@ class Pecan:
                 claim = self.claims.get(key, None)
                 if claim and value and not value.startswith(claim.prefix):
                     prefix = value[0:3]
-                    if prefix not in claim.versions and self.service.has_permissions:
+                    if prefix not in claim.versions and self.resource.has_permissions:
                         claim.versions[prefix] = self.populate(prefix, claim.key)
             return data
         else:
@@ -230,7 +238,7 @@ class Pecan:
         data = base64.b64decode(f'{prefix}=')
         version = int.from_bytes(data, byteorder='little')
 
-        uri = self.service.as_permissions_uri(timeout)
+        uri = self.resource.as_permissions_uri(timeout)
         uri.set(key, version)
         permissions = uri.get()
 
@@ -245,13 +253,13 @@ class Pecan:
 
     def dump(self) -> bytes:
         return json.dumps({
-            'uri': self.service._entrypoint,
+            'uri': self.resource._entrypoint,
             'artifact': self.artifact,
             'schema': str(self.schema),
             'manifest': self.manifest,
             'user': self.user,
             'account_id': self.account_id,
-            '@links': self.service._links,
+            '@links': self.resource._links,
         }).encode()
 
 class Session:

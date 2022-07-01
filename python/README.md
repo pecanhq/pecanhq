@@ -34,7 +34,7 @@ Create a single instance of the service on application startup. The service requ
 assertion = pecan.find("<claim>", "<value>", tenant=None)
 if assertion is None:
     # In this case, user profiles are being lazily created
-    profile = pecan.service.as_assign_identity_uri().post(
+    profile = pecan.resource.as_assign_identity_uri().post(
         "<claim>",
         "<value>",
         [ "<scope>" ])
