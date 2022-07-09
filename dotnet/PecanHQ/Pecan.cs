@@ -54,7 +54,7 @@ namespace PecanHQ
             ClaimsPrincipal user,
             Guid accountId,
             string artifact,
-            decimal schema,
+            int version,
             GrantService service,
             IGrantResource resource)
         {
@@ -70,7 +70,7 @@ namespace PecanHQ
             this.User = user;
             this.AccountId = accountId;
             this.Artifact = artifact;
-            this.Schema = schema;
+            this.Version = version;
             this.Service = service;
             this.Resource = resource;
         }
@@ -98,7 +98,7 @@ namespace PecanHQ
         /// <summary>
         /// The schema version.
         /// </summary>
-        public decimal Schema { get; }
+        public int Version { get; }
 
         /// <summary>
         /// The main entrypoint service for direct access to the API.
@@ -200,7 +200,7 @@ namespace PecanHQ
             var state = new ServiceState(
                 this.Service.Uri,
                 this.Artifact,
-                this.Schema,
+                this.Version,
                 this.manifest,
                 this.User.Claims.ToDictionary(x => x.Type, x => x.Value),
                 this.AccountId);
@@ -265,7 +265,7 @@ namespace PecanHQ
             }
 
             var manifest = await this.Resource.AsManifestUri(token)
-                .AsQuery(this.Artifact, this.Schema)
+                .AsQuery(this.Artifact, this.Version)
                 .GetAsync();
 
             return Reload(this, manifest);
@@ -371,7 +371,7 @@ namespace PecanHQ
             string keyId,
             string secret,
             string artifact,
-            decimal schema,
+            int version,
             [MaybeNullWhen(false)] out Pecan? pecan)
         {
             ServiceState? state;
@@ -400,7 +400,7 @@ namespace PecanHQ
             var service = new GrantService(handler, state.Uri);
             if (state.links == null
                 || state.Artifact != artifact
-                || state.Schema != schema
+                || state.Version != version
                 || !GrantResource.TryLoad(handler, state.links, out var entrypoint))
             {
                 pecan = null;
@@ -416,7 +416,7 @@ namespace PecanHQ
                 principal,
                 state.AccountId,
                 artifact,
-                schema,
+                version,
                 service,
                 entrypoint);
             return Reload(pecan, state.Manifest);
@@ -432,7 +432,7 @@ namespace PecanHQ
             byte[] utf8Json,
             IHttpHandler handler,
             string artifact,
-            decimal schema,
+            int version,
             [MaybeNullWhen(false)] out Pecan? pecan)
         {
             ServiceState? state;
@@ -449,7 +449,7 @@ namespace PecanHQ
             var service = new GrantService(handler, state.Uri);
             if (state.links == null
                 || state.Artifact != artifact
-                || state.Schema != schema
+                || state.Version != version
                 || !GrantResource.TryLoad(handler, state.links, out var entrypoint))
             {
                 pecan = null;
@@ -465,7 +465,7 @@ namespace PecanHQ
                 principal,
                 state.AccountId,
                 artifact,
-                schema,
+                version,
                 service,
                 entrypoint);
             return Reload(pecan, state.Manifest);
@@ -478,7 +478,7 @@ namespace PecanHQ
             string keyId,
             string secret,
             string artifact,
-            decimal schema,
+            int version,
             Uri? uri = null,
             CancellationToken token = default)
         {
@@ -493,7 +493,7 @@ namespace PecanHQ
             }
 
             var handler = new SigningHttpHandler(CLIENT, keyId, key);
-            return CreateAsync(handler, artifact, schema, uri, token);
+            return CreateAsync(handler, artifact, version, uri, token);
         }
 
         /// <summary>
@@ -505,14 +505,14 @@ namespace PecanHQ
         public static async Task<Pecan> CreateAsync(
             IHttpHandler handler,
             string artifact,
-            decimal schema,
+            int version,
             Uri? uri = null,
             CancellationToken token = default)
         {
             var service = new Grant.GrantService(handler, uri ?? API);
             var entrypoint = await service.GetAsync(token);
             var manifest = await entrypoint.AsManifestUri(token)
-                .AsQuery(artifact, schema)
+                .AsQuery(artifact, version)
                 .GetAsync();
             if (manifest == null) throw new ArgumentException(
                 "No matching artifact version found",
@@ -529,7 +529,7 @@ namespace PecanHQ
                 session.Assertions.Select(x => new System.Security.Claims.Claim(x.Key, x.Value, null, manifest.Authority))
             );
             var principal = new ClaimsPrincipal(identity);
-            var pecan = new Pecan(handler, manifest, principal, session.AccountId, artifact, schema, service, entrypoint);
+            var pecan = new Pecan(handler, manifest, principal, session.AccountId, artifact, version, service, entrypoint);
             Reload(pecan, manifest);
             return pecan;
         }

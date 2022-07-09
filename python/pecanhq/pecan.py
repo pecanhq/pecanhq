@@ -25,7 +25,7 @@ def create(
         key: str,
         secret: str,
         artifact: str,
-        schema: decimal.Decimal,
+        version: int,
         url: str = 'https://www.pecanhq.com/grant/',
         cached: typing.Optional[bytes] = None,
         timeout: typing.Optional[float] = None):
@@ -48,7 +48,7 @@ def create(
 
         success = isinstance(data, dict)
         success &= data.get('artifact', None) == artifact
-        success &= data.get('schema', None) == str(schema)
+        success &= data.get('version', None) == version
         success &= data.get('uri', None) == url
 
         if success:
@@ -70,7 +70,7 @@ def create(
         assert resource.has_refresh_profile, 'The credentials have no access to the refresh profile resource'
 
         q1 = resource.as_manifest_uri(timeout)
-        q1.set(artifact, schema)
+        q1.set(artifact, version)
         manifest = q1.get()
         assert manifest is not None, 'No matching manifest was found'
 
@@ -80,7 +80,7 @@ def create(
         user = { x['key']: x['value'] for x in profile['assertions']}
         account_id = profile['account_id']
 
-    pecan = Pecan(account_id, artifact, schema, resource, manifest, user)
+    pecan = Pecan(account_id, artifact, version, resource, manifest, user)
     for entry in manifest['services']:
         resources = {}
         system = 32767&entry['version']
@@ -122,13 +122,13 @@ class Pecan:
     def __init__(self,
             account_id: str,
             artifact: str,
-            schema: decimal.Decimal,
+            version: int,
             resource: grant.Grant,
             manifest: typing.Dict,
             user: typing.Dict) -> None:
         self.account_id = account_id
         self.artifact = artifact
-        self.schema = schema
+        self.version = version
         self.resource = resource
         self.manifest = manifest
         self.masks = { x['key']: x['mask'] for x in manifest['permissions']}
@@ -255,7 +255,7 @@ class Pecan:
         return json.dumps({
             'uri': self.resource._entrypoint,
             'artifact': self.artifact,
-            'schema': str(self.schema),
+            'version': self.version,
             'manifest': self.manifest,
             'user': self.user,
             'account_id': self.account_id,

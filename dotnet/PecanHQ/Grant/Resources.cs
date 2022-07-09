@@ -2532,17 +2532,17 @@ namespace PecanHQ.Grant.Resources
         /// A utility method to update the query parameters for this URI
         /// </summary>
         /// <param name="artifact">The artifact name.</param>
-        /// <param name="schema">The schema version. If omitted, the current (perhaps unreleased) schema will be fetched.</param>
+        /// <param name="version">The schema version. If omitted, the latest (perhaps unreleased) state will be used.</param>
         /// <remarks>
         /// This method mutates the URI and replaces all query parameters with the provided values.
         /// </remarks>
         public ManifestUri AsQuery(
             string artifact,
-            decimal? schema = null)
+            int? version = null)
         {
             this.Query = string.Join("&", AsParameterStream(
                 artifact,
-                schema));
+                version));
             return this;
         }
 
@@ -2551,14 +2551,14 @@ namespace PecanHQ.Grant.Resources
         /// </summary>
         private static IEnumerable<string> AsParameterStream(
             string artifact,
-            decimal? schema = null)
+            int? version = null)
         {
             yield return string.Format(
                 "artifact={0}",
                 Uri.EscapeDataString(artifact));
-            if (schema != null) yield return string.Format(
-                "schema={0}",
-                schema);
+            if (version != null) yield return string.Format(
+                "version={0}",
+                version);
         }
 
     }
@@ -4371,18 +4371,18 @@ namespace PecanHQ.Grant.Resources
         /// Activate a specific artifact version.
         /// </summary>
         /// <param name="artifact">The name of this artifact.</param>
-        /// <param name="schema">The artifact schema version string.</param>
+        /// <param name="version">The artifact schema version.</param>
         /// <param name="published">A flag indicating whether the artifact should be the currently published version of the schema.</param>
         /// <param name="description">Optionally override the description.</param>
         public async Task PostAsync(
             string artifact,
-            decimal schema,
+            int version,
             bool published,
             string? description = null)
         {
             string d = JsonSerializer.Serialize(new Types.SetReleaseStatus(
                 artifact,
-                schema,
+                version,
                 published)
                 {
                     Description = description,
@@ -4805,7 +4805,7 @@ namespace PecanHQ.Grant.Resources
         /// <param name="openapi">The OpenAPI document for the application.</param>
         public async Task PostAsync(
             string name,
-            decimal version,
+            int version,
             string claim,
             string description,
             string idp,

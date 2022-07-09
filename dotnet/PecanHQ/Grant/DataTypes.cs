@@ -44,7 +44,7 @@ namespace PecanHQ.Grant.Types
         /// The published version of the artifact.
         /// </summary>
         [JsonPropertyName("published")]
-        public decimal? Published { get; set; }
+        public int? Published { get; set; }
 
         /// <summary>
         /// The instant the artifact was last modified.
@@ -120,7 +120,7 @@ namespace PecanHQ.Grant.Types
         /// The published version of the artifact.
         /// </summary>
         [JsonPropertyName("published")]
-        public decimal? Published { get; set; }
+        public int? Published { get; set; }
 
         /// <summary>
         /// The instant the artifact was last modified.

@@ -4,7 +4,6 @@
 
 from pecanhq import meta
 from urllib import parse as p
-import decimal
 import typing
 import uuid
 
@@ -1118,15 +1117,15 @@ class ManifestUri:
 
     def set(self,
         artifact: str,
-        schema: decimal.Decimal = None) -> None:
+        version: int = None) -> None:
         """
         Mutate the request, replacing all query parameters.
 
         Args:
             artifact: The artifact name.
-            schema: The schema version. If omitted, the current (perhaps unreleased) schema will be fetched.
+            version: The schema version. If omitted, the latest (perhaps unreleased) state will be used.
         """
-        q = '&'.join(self.args(artifact, schema))
+        q = '&'.join(self.args(artifact, version))
         r = p.urlsplit(self.uri)
         self.uri = p.urlunsplit((r.scheme, r.netloc, r.path, q, r.fragment))
 
@@ -1142,23 +1141,23 @@ class ManifestUri:
     @staticmethod
     def create_relative_uri(
             artifact: str,
-            schema: decimal.Decimal = None) -> str:
+            version: int = None) -> str:
         """A utility method for constructing relative URI paths to this resource
 
         Returns:
             A relative uri string
         """
         return 'manifest?{}'.format(
-            '&'.join(ManifestUri.args(artifact, schema)))
+            '&'.join(ManifestUri.args(artifact, version)))
 
     @staticmethod
     def args(
         artifact: str,
-        schema: decimal.Decimal = None) -> typing.Generator[str, None, None]:
+        version: int = None) -> typing.Generator[str, None, None]:
         """Emit all arguments as individual query parameters"""
         yield f'artifact={p.quote(str(artifact))}'
-        if schema is not None:
-            yield f'schema={p.quote(str(schema))}'
+        if version is not None:
+            yield f'version={p.quote(str(version))}'
 
 
 class ProvidersUri:
@@ -3038,7 +3037,7 @@ class SetReleaseStatusUri:
 
     def post(self,
         artifact: str,
-        schema: decimal.Decimal,
+        version: int,
         published: bool,
         description: str = None):
         """
@@ -3046,7 +3045,7 @@ class SetReleaseStatusUri:
 
         Args:
             artifact: The name of this artifact.
-            schema: The artifact schema version string.
+            version: The artifact schema version.
             published: A flag indicating whether the artifact should be the currently published version of the schema.
             description: Optionally override the description.
         """
@@ -3054,7 +3053,7 @@ class SetReleaseStatusUri:
             self.uri,
             json={
                 'artifact': artifact,
-                'schema': schema,
+                'version': version,
                 'published': published,
                 'description': description
             },
@@ -3489,7 +3488,7 @@ class SetupUri:
 
     def post(self,
         name: str,
-        version: decimal.Decimal,
+        version: int,
         claim: str,
         description: str,
         idp: str,

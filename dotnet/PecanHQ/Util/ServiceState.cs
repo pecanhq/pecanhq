@@ -23,14 +23,14 @@ namespace PecanHQ.Util
         public ServiceState(
             Uri uri,
             string artifact,
-            decimal schema,
+            int version,
             AppManifest manifest,
             Dictionary<string, string> user,
             Guid accountId)
         {
             this.Uri = uri;
             this.Artifact = artifact;
-            this.Schema = schema;
+            this.Version = version;
             this.Manifest = manifest;
             this.User = user;
             this.AccountId = accountId;
@@ -51,8 +51,8 @@ namespace PecanHQ.Util
         /// <summary>
         /// The artifact schema version string.
         /// </summary>
-        [JsonPropertyName("schema")]
-        public decimal Schema { get; set; }
+        [JsonPropertyName("version")]
+        public int Version { get; set; }
 
         /// <summary>
         /// The manifest state.
@@ -85,7 +85,7 @@ namespace PecanHQ.Util
             {
                 return Equals(this.Uri, that.Uri)
                     && Equals(this.Artifact, that.Artifact)
-                    && Equals(this.Schema, that.Schema)
+                    && Equals(this.Version, that.Version)
                     && Equals(this.Manifest, that.Manifest);
             }
             return false;
@@ -94,7 +94,7 @@ namespace PecanHQ.Util
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return HashCode.Combine(Uri, Artifact, Schema, Manifest);
+            return HashCode.Combine(Uri, Artifact, Version, Manifest);
         }
 
     }

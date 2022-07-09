@@ -1297,11 +1297,11 @@ namespace PecanHQ.Grant.Types
         [JsonConstructor]
         public SetReleaseStatus(
             string artifact,
-            decimal schema,
+            int version,
             bool published)
         {
             this.Artifact = artifact;
-            this.Schema = schema;
+            this.Version = version;
             this.Published = published;
         }
 
@@ -1312,10 +1312,10 @@ namespace PecanHQ.Grant.Types
         public string Artifact { get; set; }
 
         /// <summary>
-        /// The artifact schema version string.
+        /// The artifact schema version.
         /// </summary>
-        [JsonPropertyName("schema")]
-        public decimal Schema { get; set; }
+        [JsonPropertyName("version")]
+        public int Version { get; set; }
 
         /// <summary>
         /// A flag indicating whether the artifact should be the
@@ -1336,7 +1336,7 @@ namespace PecanHQ.Grant.Types
             if (obj is SetReleaseStatus that)
             {
                 return Equals(this.Artifact, that.Artifact)
-                    && Equals(this.Schema, that.Schema)
+                    && Equals(this.Version, that.Version)
                     && Equals(this.Published, that.Published)
                     && Equals(this.Description, that.Description);
             }
@@ -1346,7 +1346,7 @@ namespace PecanHQ.Grant.Types
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return HashCode.Combine(Artifact, Schema, Published, Description);
+            return HashCode.Combine(Artifact, Version, Published, Description);
         }
 
     }
@@ -1771,7 +1771,7 @@ namespace PecanHQ.Grant.Types
         [JsonConstructor]
         public Setup(
             string name,
-            decimal version,
+            int version,
             string claim,
             string description,
             string idp)
@@ -1793,7 +1793,7 @@ namespace PecanHQ.Grant.Types
         /// The schema version.
         /// </summary>
         [JsonPropertyName("version")]
-        public decimal Version { get; set; }
+        public int Version { get; set; }
 
         /// <summary>
         /// The permissions claims.
