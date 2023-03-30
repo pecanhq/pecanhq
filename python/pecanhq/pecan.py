@@ -460,7 +460,7 @@ class SigningAuth(AuthBase):
         self.key = quote(key)
         self.secret = secret
 
-    def __call__(self, r: requests.PreparedRequest):
+    def __call__(self, r):
         date = r.headers.get('date', None)
         if date is None:
             date = formatdate(timeval=None, localtime=False, usegmt=True)

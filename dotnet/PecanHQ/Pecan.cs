@@ -401,7 +401,7 @@ namespace PecanHQ
             if (state.links == null
                 || state.Artifact != artifact
                 || state.Version != version
-                || !GrantResource.TryLoad(handler, state.links, out var entrypoint))
+                || !service.TryLoad(state.links, out var entrypoint))
             {
                 pecan = null;
                 return false;
@@ -450,7 +450,7 @@ namespace PecanHQ
             if (state.links == null
                 || state.Artifact != artifact
                 || state.Version != version
-                || !GrantResource.TryLoad(handler, state.links, out var entrypoint))
+                || !service.TryLoad(state.links, out var entrypoint))
             {
                 pecan = null;
                 return false;
@@ -510,7 +510,7 @@ namespace PecanHQ
             CancellationToken token = default)
         {
             var service = new Grant.GrantService(handler, uri ?? API);
-            var entrypoint = await service.GetAsync(token);
+            (_, var entrypoint) = await service.GetAsync(token);
             var manifest = await entrypoint.AsManifestUri(token)
                 .AsQuery(artifact, version)
                 .GetAsync();

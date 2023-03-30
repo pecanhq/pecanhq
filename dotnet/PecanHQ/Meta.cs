@@ -26,7 +26,7 @@ namespace PecanHQ
         /// <summary>
         /// The default serialization options for JSON.
         /// </summary>
-        JsonSerializerOptions? Json => HttpClientExtension.JSON;
+        JsonSerializerOptions Json => HttpClientExtension.JSON;
 
         /// <summary>
         /// Decorate an API request with authentication, then submit asynchronously.
@@ -44,7 +44,7 @@ namespace PecanHQ
         /// <summary>
         /// A singleton value for the default json options.
         /// </summary>
-        internal static readonly JsonSerializerOptions? JSON = new JsonSerializerOptions()
+        internal static readonly JsonSerializerOptions JSON = new JsonSerializerOptions()
         {
             ReadCommentHandling = JsonCommentHandling.Skip,
             PropertyNamingPolicy = null,
@@ -62,7 +62,7 @@ namespace PecanHQ
         };
 
         /// <summary>
-        /// JSON API request method, where failures are tranformed into ServiceExceptions
+        /// JSON API request method, where failures are transformed into ServiceExceptions
         /// </summary>
         public static Task<T?> GetFromJsonAsync<T>(
             this IHttpHandler handler,
@@ -71,11 +71,11 @@ namespace PecanHQ
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             request.Headers.Add("accept", "application/json");
-            return handler.SendAsync(request, token).GetFromJsonAsync<T>(token, options: handler.Json);
+            return handler.SendAsync(request, token).GetFromJsonAsync<T>(handler.Json, token);
         }
 
         /// <summary>
-        /// JSON API request method, where failures are tranformed into ServiceExceptions
+        /// JSON API request method, where failures are transformed into ServiceExceptions
         /// </summary>
         /// <remarks>
         /// A utility method for string URIs.
@@ -87,19 +87,19 @@ namespace PecanHQ
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             request.Headers.Add("accept", "application/json");
-            return handler.SendAsync(request, token).GetFromJsonAsync<T>(token, options: handler.Json);
+            return handler.SendAsync(request, token).GetFromJsonAsync<T>(handler.Json, token);
         }
 
         /// <summary>
-        /// JSON API request method, where failures are tranformed into ServiceExceptions
+        /// JSON API request method, where failures are transformed into ServiceExceptions
         /// </summary>
         /// <remarks>
         /// A utility method for in-flight requests.
         /// </remarks>
         public static async Task<T?> GetFromJsonAsync<T>(
             this Task<HttpResponseMessage> request,
-            CancellationToken token = default,
-            JsonSerializerOptions? options = null) where T : class
+            JsonSerializerOptions options,
+            CancellationToken token = default) where T : class
         {
             var response = await request;
             if (!response.IsSuccessStatusCode)
@@ -120,7 +120,7 @@ namespace PecanHQ
         }
 
         /// <summary>
-        /// JSON API request method, where failures are tranformed into ServiceExceptions
+        /// JSON API request method, where failures are transformed into ServiceExceptions
         /// </summary>
         /// <remarks>
         /// A utility method for string URIs.
@@ -139,7 +139,7 @@ namespace PecanHQ
         }
 
         /// <summary>
-        /// JSON API request method, where failures are tranformed into ServiceExceptions
+        /// JSON API request method, where failures are transformed into ServiceExceptions
         /// </summary>
         public static async Task<IResultSet<T>> ScrollFromJsonAsync<T>(
             this IHttpHandler handler,
@@ -191,11 +191,7 @@ namespace PecanHQ
                 response.Content.Headers.ContentDisposition?.FileName ?? throw new ServiceException(response.StatusCode, new ServiceError(
                     "evaluation.3000",
                     "Invalid attachment",
-                    "The attachment was returned without an associated file name")),
-                response.Content.Headers.ContentLength ?? throw new ServiceException(response.StatusCode, new ServiceError(
-                    "evaluation.3000",
-                    "Invalid attachment",
-                    "The attachment was returned without a content length")));
+                    "The attachment was returned without an associated file name")));
         }
 
         /// <summary>
@@ -232,11 +228,7 @@ namespace PecanHQ
                 response.Content.Headers.ContentDisposition?.FileName ?? throw new ServiceException(response.StatusCode, new ServiceError(
                     "evaluation.3000",
                     "Invalid attachment",
-                    "The attachment was returned without an associated file name")),
-                response.Content.Headers.ContentLength ?? throw new ServiceException(response.StatusCode, new ServiceError(
-                    "evaluation.3000",
-                    "Invalid attachment",
-                    "The attachment was returned without a content length")));
+                    "The attachment was returned without an associated file name")));
         }
 
         /// <summary>
@@ -416,14 +408,6 @@ namespace PecanHQ
         /// </value>
         string FileName { get; }
 
-        /// <summary>
-        /// The file length.
-        /// </summary>
-        /// <value>
-        /// The total byte length of a file, when available.
-        /// </value>
-        long Length { get; }
-
     }
 
     /// <summary>
@@ -490,7 +474,7 @@ namespace PecanHQ
         bool HasNext { get; }
 
         /// <value>A pagination token for the next page in the result set.</value>
-        string? NextPage { get; }
+        string? Cursor { get; }
 
         /// <summary>
         /// Load the next page, and notify the caller if there are more rows to be loaded.
@@ -510,12 +494,11 @@ namespace PecanHQ
         /// <summary>
         /// Construct a new attachment stream by decorating an existing stream.
         /// </summary>
-        public AttachmentStream(Stream stream, ContentType contentType, string fileName, long length)
+        public AttachmentStream(Stream stream, ContentType contentType, string fileName)
         {
             this.stream = stream;
             this.ContentType = contentType;
             this.FileName = fileName;
-            this.Length = length;
         }
 
         /// <inheritdoc/>
@@ -525,7 +508,7 @@ namespace PecanHQ
         public string FileName { get; }
 
         /// <inheritdoc/>
-        public override long Length { get; }
+        public override long Length { get => stream.Length; }
 
         /// <inheritdoc/>
         public override long Position { get => stream.Position; set => stream.Position = value; }
@@ -581,10 +564,10 @@ namespace PecanHQ
         public override void EndWrite(IAsyncResult asyncResult) => throw new NotSupportedException();
 
         /// <inheritdoc/>
-        public override void Flush() => throw new NotSupportedException();
+        public override void Flush() => stream.Flush();
 
         /// <inheritdoc/>
-        public override Task FlushAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
+        public override Task FlushAsync(CancellationToken cancellationToken) => stream.FlushAsync(cancellationToken);
 
         /// <inheritdoc/>
         public override int Read(byte[] buffer, int offset, int count) => stream.Read(buffer, offset, count);
@@ -648,14 +631,12 @@ namespace PecanHQ
         public StreamAttachment(
             Func<Task<Stream>> open,
             ContentType contentType,
-            string fileName,
-            long length)
+            string fileName)
         {
             this.open = open;
 
             this.ContentType = contentType;
             this.FileName = fileName;
-            this.Length = length;
         }
 
         /// <inheritdoc/>
@@ -668,16 +649,12 @@ namespace PecanHQ
         public string FileName { get; }
 
         /// <inheritdoc/>
-        public long Length { get; }
-
-        /// <inheritdoc/>
         public async ValueTask<AttachmentStream> LoadAsync(CancellationToken token = default)
         {
             return new AttachmentStream(
                 await this.open(),
                 ContentType,
-                FileName,
-                Length);
+                FileName);
         }
 
     }
@@ -703,7 +680,6 @@ namespace PecanHQ
 
             this.ContentType = contentType;
             this.FileName = fileName;
-            this.Length = data.Length;
         }
 
         /// <inheritdoc/>
@@ -716,17 +692,13 @@ namespace PecanHQ
         public string FileName { get; }
 
         /// <inheritdoc/>
-        public long Length { get; }
-
-        /// <inheritdoc/>
         public ValueTask<AttachmentStream> LoadAsync(CancellationToken token = default)
         {
             var stream = new AttachmentStream(
                 new MemoryStream(data),
                 ContentType,
-                FileName,
-                Length);
-            return ValueTask.FromResult(stream);
+                FileName);
+            return new ValueTask<AttachmentStream>(Task.FromResult(stream));
         }
 
     }
@@ -788,17 +760,17 @@ namespace PecanHQ
         internal ResultPage()
         {
             this.Rows = Array.Empty<T>();
-            this.PageToken = null;
+            this.Cursor = null;
         }
 
         /// <summary>
         /// Default constructor.
         /// </summary>
         [JsonConstructor]
-        public ResultPage(T[] rows, string pageToken)
+        public ResultPage(T[] rows, string cursor)
         {
             this.Rows = rows;
-            this.PageToken = pageToken;
+            this.Cursor = cursor;
         }
 
         /// <value>All rows in the local page.</value>
@@ -806,8 +778,8 @@ namespace PecanHQ
         public T[] Rows { get; }
 
         /// <value>The opaque token for the next page in the sequence.</value>
-        [JsonPropertyName("page_token")]
-        public string? PageToken { get; }
+        [JsonPropertyName("cursor")]
+        public string? Cursor { get; }
 
         /// <value>A utility property required due to JSON parsing limitations.</value>
         [JsonInclude]
@@ -858,7 +830,7 @@ namespace PecanHQ
         public bool HasNext { get { return this.page.next != null; } }
 
         /// <inheritdoc/>
-        public string? NextPage { get { return this.page.next?.Query; } }
+        public string? Cursor { get { return this.page.next?.Query; } }
 
         /// <inheritdoc/>
         public async ValueTask<bool> LoadMoreAsync(CancellationToken token = default)
@@ -978,7 +950,7 @@ namespace PecanHQ
         public bool HasNext { get { return this.src.HasNext; } }
 
         /// <inheritdoc/>
-        public string? NextPage { get { return this.src.NextPage; } }
+        public string? Cursor { get { return this.src.Cursor; } }
 
         /// <inheritdoc/>
         public ValueTask<bool> LoadMoreAsync(CancellationToken token = default)
@@ -1024,6 +996,64 @@ namespace PecanHQ
         {
             return this.src.DisposeAsync();
         }
+
+    }
+
+    /// <summary>
+    /// A bundle of links for all top-level resources in a portal.
+    /// </summary>
+    public sealed class ServiceEntrypoint : INavigationAware
+    {
+
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        [JsonConstructor]
+        public ServiceEntrypoint(LookupDefinition[] lookups)
+        {
+            this.Lookups = lookups;
+        }
+
+        /// <value>All requested lookup definitions.</value>
+        [JsonPropertyName("lookups")]
+        public LookupDefinition[] Lookups { get; }
+
+        /// <value>A utility property required due to JSON parsing limitations.</value>
+        [JsonInclude]
+        [JsonPropertyName("@links")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, Uri>? links { get; private set; }
+
+    }
+
+    /// <summary>
+    /// A namespaced key-value pair.
+    /// </summary>
+    public sealed class LookupDefinition
+    {
+
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        [JsonConstructor]
+        public LookupDefinition(string category, string value, string display)
+        {
+            this.Category = category;
+            this.Value = value;
+            this.Display = display;
+        }
+
+        /// <value>The namespace of the lookup value.</value>
+        [JsonPropertyName("category")]
+        public string Category { get; }
+
+        /// <value>The canonical value for the lookup, unique within the category.</value>
+        [JsonPropertyName("value")]
+        public string Value { get; }
+
+        /// <value>A descriptive label for the lookup.</value>
+        [JsonPropertyName("display")]
+        public string Display { get; }
 
     }
 
