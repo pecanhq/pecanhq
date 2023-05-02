@@ -1676,6 +1676,24 @@ namespace PecanHQ.Grant
         }
 
         /// <inheritdoc/>
+        public bool HasLogUri => this.links != null
+            && links.TryGetValue("log", out var uri)
+            && this.origin?.IsBaseOf(uri) == true;
+
+        /// <inheritdoc/>
+        public Resources.LogUri AsLogUri(CancellationToken token = default)
+        {
+            if (this.handler != null
+                && this.links != null
+                && links.TryGetValue("log", out var resolved)
+                && this.origin?.IsBaseOf(resolved) == true)
+            {
+                return new Resources.LogUri(resolved, handler, token);
+            }
+            else throw new SecurityException("The log endpoint is unavailable");
+        }
+
+        /// <inheritdoc/>
         public GrantResource From(INavigationAware? src)
         {
             return new GrantResource(this.handler, this.origin, src?.links);

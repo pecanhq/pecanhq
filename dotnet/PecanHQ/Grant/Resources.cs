@@ -476,6 +476,17 @@ namespace PecanHQ.Grant.Resources
         Resources.CreateUserUri AsCreateUserUri(CancellationToken token = default);
 
         /// <summary>
+        /// A flag indicating the log resource is available.
+        /// </summary>
+        bool HasLogUri { get; }
+
+        /// <summary>
+        /// Start building an API request from the log resource url.
+        /// </summary>
+        /// <exception cref="System.Security.SecurityException">Thrown when the url is unavailable.</exception>
+        Resources.LogUri AsLogUri(CancellationToken token = default);
+
+        /// <summary>
         /// A flag indicating the override account resource is available.
         /// </summary>
         bool HasOverrideAccountUri { get; }
@@ -5351,6 +5362,65 @@ namespace PecanHQ.Grant.Resources
                 description),
                 handler.Json);
             StringContent c = new StringContent(d, Encoding.UTF8, "application/json");
+            var r = new HttpRequestMessage(HttpMethod.Post, this.Uri);
+            r.Headers.Add("accept", "application/json");
+            r.Content = c;
+            var o = await handler.SendAsync(r, this.token);
+            if (!o.IsSuccessStatusCode) throw await ServiceException.CreateAsync(o, options: handler.Json);
+        }
+
+    }
+
+    /// <summary>
+    /// A mutable intermediate form for a requested log action
+    /// </summary>
+    public sealed class LogUri : UriBuilder
+    {
+
+        private readonly IHttpHandler handler;
+
+        private readonly CancellationToken token;
+
+        /// <summary>
+        /// Create a new UriBuilder for the log action
+        /// </summary>
+        public LogUri(
+            Uri uri,
+            IHttpHandler handler,
+            CancellationToken token) : base(uri)
+        {
+            this.handler = handler;
+            this.token = token;
+        }
+
+        /// <summary>
+        /// Log a new audit event.
+        /// </summary>
+        /// <param name="resourceId">The resource that effected the action.</param>
+        /// <param name="version">The schema version at the time the action was effected.</param>
+        /// <param name="name">The audit event name.</param>
+        /// <param name="payload">The raw contents of the audit event.</param>
+        /// <param name="accountabilityId">The accountability that nominally undertook the action, under the auspices of the actor that submitted this event.</param>
+        public async Task PostAsync(
+            Guid resourceId,
+            int version,
+            string name,
+            meta::IAttachment payload,
+            Guid? accountabilityId = null)
+        {
+            meta::AttachmentStream s;
+            StreamContent f;
+            var c = new MultipartFormDataContent();
+            c.Add(new StringContent(resourceId.ToString("n")), "resource_id");
+            c.Add(new StringContent(version.ToString()), "version");
+            c.Add(new StringContent(name), "name");
+            s = await payload.LoadAsync(this.token);
+            f = new StreamContent(s);
+            f.Headers.ContentType = MediaTypeHeaderValue.Parse(s.ContentType.ToString());
+            c.Add(f, "payload", s.FileName);
+            if (accountabilityId != null) c.Add(
+                    new StringContent(accountabilityId.Value.ToString("n")),
+                    "accountability_id");
             var r = new HttpRequestMessage(HttpMethod.Post, this.Uri);
             r.Headers.Add("accept", "application/json");
             r.Content = c;

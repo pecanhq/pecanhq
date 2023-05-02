@@ -2047,4 +2047,79 @@ namespace PecanHQ.Grant.Types
 
     }
 
+    /// <summary>
+    /// Log a new audit event.
+    /// </summary>
+    public class Log
+    {
+
+        /// <summary>
+        /// Default constructor setting all required fields
+        /// </summary>
+        [JsonConstructor]
+        public Log(
+            Guid resourceId,
+            int version,
+            string name,
+            Uri payload)
+        {
+            this.ResourceId = resourceId;
+            this.Version = version;
+            this.Name = name;
+            this.Payload = payload;
+        }
+
+        /// <summary>
+        /// The resource that effected the action.
+        /// </summary>
+        [JsonPropertyName("resource_id")]
+        public Guid ResourceId { get; set; }
+
+        /// <summary>
+        /// The schema version at the time the action was effected.
+        /// </summary>
+        [JsonPropertyName("version")]
+        public int Version { get; set; }
+
+        /// <summary>
+        /// The audit event name.
+        /// </summary>
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// The raw contents of the audit event.
+        /// </summary>
+        [JsonPropertyName("payload")]
+        public Uri Payload { get; set; }
+
+        /// <summary>
+        /// The accountability that nominally undertook the action,
+        /// under the auspices of the actor that submitted this event.
+        /// </summary>
+        [JsonPropertyName("accountability_id")]
+        public Guid? AccountabilityId { get; set; }
+
+        /// <inheritdoc/>
+        public override bool Equals(object? obj)
+        {
+            if (obj is Log that)
+            {
+                return Equals(this.ResourceId, that.ResourceId)
+                    && Equals(this.Version, that.Version)
+                    && Equals(this.Name, that.Name)
+                    && Equals(this.Payload, that.Payload)
+                    && Equals(this.AccountabilityId, that.AccountabilityId);
+            }
+            return false;
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ResourceId, Version, Name, Payload, AccountabilityId);
+        }
+
+    }
+
 }

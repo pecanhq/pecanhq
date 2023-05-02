@@ -5,7 +5,7 @@
     <PackageId>PecanHQ</PackageId>
     <PackageProjectUrl>https://www.pecanhq.com/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/pecanhq/pecanhq</RepositoryUrl>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Liam Fisk</Authors>
     <Company>Squirrel Technologies Limited</Company>
     <Copyright>© Squirrel Technologies Limited</Copyright>
@@ -39,7 +39,7 @@
 		<AcornProjectToken>eecbf64347aebf10dd67d4b0359b0c35</AcornProjectToken>
 
 		<!-- The project branch (normally 'master' for development and 'final' for releases) -->
-		<AcornProjectBranch>master</AcornProjectBranch>
+		<AcornProjectBranch>final</AcornProjectBranch>
 
 		<!-- [OPTIONAL] The project version -->
 		<AcornProjectVersion></AcornProjectVersion>
